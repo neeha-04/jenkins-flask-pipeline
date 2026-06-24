@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jenkins Flask Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        /* MAIN PAGE */
+        .container {
+            text-align: center;
+            padding: 50px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            max-width: 700px;
+            width: 90%;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #e94560; }
+        .badge { display: inline-block; background: #e94560; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 30px; }
+        .status { background: rgba(0,255,100,0.1); border: 1px solid #00ff64; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .status h2 { color: #00ff64; }
+        .pipeline-stages { display: flex; justify-content: center; gap: 10px; margin: 25px 0; flex-wrap: wrap; }
+        .stage { background: rgba(233,69,96,0.2); border: 1px solid #e94560; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; }
+        .arrow { color: #e94560; font-size: 1.2rem; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 30px; }
+        .nav-btn {
+            background: linear-gradient(135deg, #e94560, #c73652);
+            border: none;
+            padding: 18px 10px;
+            border-radius: 14px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(233,69,96,0.4); }
+        .nav-btn .icon { font-size: 1.8rem; }
+
+        /* MODAL OVERLAY */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 20px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            width: 35px; height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: #e94560; }
+        .modal-icon { font-size: 3rem; margin-bottom: 15px; }
+        .modal h2 { color: #e94560; margin-bottom: 20px; font-size: 1.5rem; }
+        .info-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-card .label { color: #aaa; font-size: 0.85rem; }
+        .info-card .value { color: white; font-weight: 600; }
+        .status-pill {
+            display: inline-block;
+            background: rgba(0,255,100,0.15);
+            border: 1px solid #00ff64;
+            color: #00ff64;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .loading { color: #aaa; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚀 Jenkins Pipeline</h1>
+    <span class="badge">Advanced CI/CD Project</span>
+
+    <div class="status">
+        <h2>✅ Deployment Successful</h2>
+        <p>Flask app is running via Jenkins Pipeline</p>
+    </div>
+
+    <div class="pipeline-stages">
+        <span class="stage">📦 Build</span>
+        <span class="arrow">→</span>
+        <span class="stage">🧪 Test</span>
+        <span class="arrow">→</span>
+        <span class="stage">🐳 Docker</span>
+        <span class="arrow">→</span>
+        <span class="stage">🚀 Deploy</span>
+    </div>
+
+    <div class="btn-grid">
+        <button class="nav-btn" onclick="openModal('health')">
+            <span class="icon">❤️</span>
+            Health
+        </button>
+        <button class="nav-btn" onclick="openModal('info')">
+            <span class="icon">ℹ️</span>
+            App Info
+        </button>
+    </div>
+</div>
+
+<!-- HEALTH MODAL -->
+<div class="modal-overlay" id="modal-health">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('health')">✕</button>
+        <div class="modal-icon">❤️</div>
+        <h2>Health Status</h2>
+        <div id="health-content"><p class="loading">Checking health...</p></div>
+    </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="modal-overlay" id="modal-info">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal('info')">✕</button>
+        <div class="modal-icon">ℹ️</div>
+        <h2>App Information</h2>
+        <div id="info-content"><p class="loading">Loading info...</p></div>
+    </div>
+</div>
+
+
+<script>
+    async function openModal(type) {
+        document.getElementById('modal-' + type).classList.add('active');
+
+        if (type === 'health') {
+            const res = await fetch('/api/health');
+            const d = await res.json();
+            document.getElementById('health-content').innerHTML = `
+                <div class="info-card"><span class="label">Status</span><span class="status-pill">✅ ${d.status}</span></div>
+                <div class="info-card"><span class="label">Version</span><span class="value">${d.version}</span></div>
+                <div class="info-card"><span class="label">Timestamp</span><span class="value">${new Date(d.timestamp).toLocaleString()}</span></div>
+            `;
+        }
+
+        if (type === 'info') {
+            const res = await fetch('/api/info');
+            const d = await res.json();
+            document.getElementById('info-content').innerHTML = `
+                <div class="info-card"><span class="label">App Name</span><span class="value">${d.app}</span></div>
+                <div class="info-card"><span class="label">Python Version</span><span class="value">${d.python_version}</span></div>
+                <div class="info-card"><span class="label">Platform</span><span class="value">${d.platform}</span></div>
+                <div class="info-card"><span class="label">Build</span><span class="value">${d.build}</span></div>
+            `;
+        }
+
+    }
+
+    function closeModal(type) {
+        document.getElementById('modal-' + type).classList.remove('active');
+    }
+
+    // Close on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
+</script>
+
+</body>
+</html>
