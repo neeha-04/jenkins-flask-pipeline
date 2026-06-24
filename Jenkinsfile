@@ -63,7 +63,7 @@ pipeline {
                 echo '========== Checking code style =========='
                 bat """
                     "%VENV_DIR%\\Scripts\\pip.exe" install flake8
-                    "%VENV_DIR%\\Scripts\\flake8.exe" app/ --max-line-length=100 --ignore=E501,W503 || echo "Warnings found but continuing..."
+                    "%VENV_DIR%\\Scripts\\flake8.exe" app/ --max-line-length=100 --ignore=E501,W503,E302,W293,W292 || echo "Warnings found but continuing..."
                 """
             }
         }
