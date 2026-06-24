@@ -6,7 +6,7 @@ pipeline {
         DOCKER_IMAGE    = "flask-pipeline-app"
         DOCKER_TAG      = "${BUILD_NUMBER}"
         CONTAINER_NAME  = 'flask-app-container'
-        APP_PORT        = '5000'
+        APP_PORT        = '5001'
         VENV_DIR        = 'venv'
         PYTHON          = 'C:\\Users\\neeha\\AppData\\Local\\Python\\bin\\python.exe'
     }
