@@ -8,6 +8,7 @@ pipeline {
         CONTAINER_NAME  = 'flask-app-container'
         APP_PORT        = '5000'
         VENV_DIR        = 'venv'
+        PYTHON          = 'C:\\Users\\neeha\\AppData\\Local\\Python\\bin\\python.exe'
     }
 
     options {
@@ -30,27 +31,24 @@ pipeline {
         stage('🐍 Setup Python Environment') {
             steps {
                 echo '========== Setting up virtual environment =========='
-                bat '''
-                    python -m venv %VENV_DIR%
+                bat """
+                    "%PYTHON%" -m venv %VENV_DIR%
                     call %VENV_DIR%\\Scripts\\activate.bat
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
+                    "%VENV_DIR%\\Scripts\\pip.exe" install --upgrade pip
+                    "%VENV_DIR%\\Scripts\\pip.exe" install -r requirements.txt
+                """
             }
         }
 
         stage('🧪 Run Tests') {
             steps {
                 echo '========== Running Test Suite =========='
-                bat '''
+                bat """
                     call %VENV_DIR%\\Scripts\\activate.bat
-                    pytest tests/ -v --cov=app --cov-report=xml --cov-report=term-missing
-                '''
+                    "%VENV_DIR%\\Scripts\\pytest.exe" tests/ -v --cov=app --cov-report=term-missing
+                """
             }
             post {
-                always {
-                    echo 'Test stage completed.'
-                }
                 failure {
                     echo '❌ Tests FAILED! Pipeline stopping.'
                 }
@@ -63,29 +61,28 @@ pipeline {
         stage('🔎 Code Quality Check') {
             steps {
                 echo '========== Checking code style =========='
-                bat '''
-                    call %VENV_DIR%\\Scripts\\activate.bat
-                    pip install flake8
-                    flake8 app/ --max-line-length=100 --ignore=E501,W503 || echo "Warnings found but continuing..."
-                '''
+                bat """
+                    "%VENV_DIR%\\Scripts\\pip.exe" install flake8
+                    "%VENV_DIR%\\Scripts\\flake8.exe" app/ --max-line-length=100 --ignore=E501,W503 || echo "Warnings found but continuing..."
+                """
             }
         }
 
         stage('🐳 Docker Build') {
             steps {
                 echo '========== Building Docker Image =========='
-                bat '''
+                bat """
                     docker build -t %DOCKER_IMAGE%:%DOCKER_TAG% .
                     docker tag %DOCKER_IMAGE%:%DOCKER_TAG% %DOCKER_IMAGE%:latest
                     echo Docker image built successfully!
-                '''
+                """
             }
         }
 
         stage('🚀 Deploy Container') {
             steps {
                 echo '========== Deploying Application =========='
-                bat '''
+                bat """
                     docker stop %CONTAINER_NAME% 2>nul || echo "No container to stop"
                     docker rm %CONTAINER_NAME% 2>nul || echo "No container to remove"
                     docker run -d ^
@@ -94,18 +91,18 @@ pipeline {
                         --restart unless-stopped ^
                         %DOCKER_IMAGE%:latest
                     echo Container deployed!
-                '''
+                """
             }
         }
 
         stage('✅ Health Check') {
             steps {
                 echo '========== Verifying Deployment =========='
-                bat '''
+                bat """
                     timeout /t 5 /nobreak
                     curl -f http://localhost:%APP_PORT%/api/health || exit 1
                     echo Application is healthy!
-                '''
+                """
             }
         }
     }
